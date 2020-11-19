@@ -13,15 +13,13 @@
   "author": "",
   "license": "Apache 2.0",
   "devDependencies": {
-    "@rollup/plugin-babel": "^5.2.1",
-    "@rollup/plugin-node-resolve": "^10.0.0",
-    "@rollup/plugin-strip": "^2.0.0",
     "babel-eslint": "^10.1.0",
-    "eslint": "^7.13.0",
+    "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-config-recommended": "^4.1.0",
     "eslint-plugin-prettier": "^3.1.4",
     "prettier": "^2.1.2",
     "rollup": "^2.33.3"
-  }
+  },
+  "dependencies": {}
 }
