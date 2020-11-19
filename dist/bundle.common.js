@@ -7,8 +7,12 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-// SCORM requires time to be formatted in a specific way
-// Code adapted from https://scorm.com/scorm-explained/technical-scorm/golf-examples/
+/**
+ * Derived from source code created by Rustici Software, LLC, licensed under a
+ * Creative Commons Attribution 3.0 United States License
+ * (http://creativecommons.org/licenses/by/3.0/us/)
+ * Source: https://scorm.com/scorm-explained/technical-scorm/golf-examples/
+ */
 
 function zeroPad(intNum, intNumDigits) {
   var strTemp;
@@ -711,19 +715,7 @@ class IntellumRuntime extends ScormRuntime {
   }
 }
 
-// localStorage exception constructor
-function LocalException(message, type = "") {
-  this.message = message;
-  this.type = type;
-}
-
-// SCORM exception constructor
-function ScormException(message, type = "") {
-  this.message = message;
-  this.type = type;
-}
-
-class LMSManager$1 {
+class LMSManager {
   constructor() {
     this._debug = false;
     this._lmsWindow = null;
@@ -805,7 +797,7 @@ class LMSManager$1 {
 
     while (win && attempts < maxAttempts) {
       attempts += 1;
-      apiName = LMSManager$1._windowAPI(win);
+      apiName = LMSManager._windowAPI(win);
       if (this._debug) {
         window.console.log(`attempt ${attempts}`);
       }
@@ -854,7 +846,7 @@ class LMSManager$1 {
 /**
  * Class for storing object data in local/session Storage
  */
-const LocalStorage$1 = class {
+const LocalStorage = class {
   constructor(storeName) {
     this.store = storeName.replace(/\W/g, "_");
     if (!window.localStorage.getItem(this.store)) {
@@ -887,6 +879,18 @@ const LocalStorage$1 = class {
     }
   }
 };
+
+// localStorage exception constructor
+function LocalException(message, type = "") {
+  this.message = message;
+  this.type = type;
+}
+
+// SCORM exception constructor
+function ScormException(message, type = "") {
+  this.message = message;
+  this.type = type;
+}
 
 // ScormStore Singleton
 class ScormStore {
@@ -1032,7 +1036,7 @@ class ScormStore {
 const store = new ScormStore(!!process.env.SCORM_VERSION);
 Object.freeze(store);
 
-exports.LMSManager = LMSManager$1;
-exports.LocalStorage = LocalStorage$1;
+exports.LMSManager = LMSManager;
+exports.LocalStorage = LocalStorage;
 exports.ScormStore = ScormStore;
 exports.default = store;
