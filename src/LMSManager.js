@@ -1,14 +1,18 @@
-import ScormRuntime from './ScormRuntime';
-import IntellumRuntime from './IntellumRuntime';
+import OnlineChecker from "./Online";
+import ScormRuntime from "./ScormRuntime";
+import RusticiRuntime from "./RusticiRuntime";
+import IntellumRuntime from "./IntellumRuntime";
+import { NetworkException, ScormException } from "./exceptions";
 
 class LMSManager {
   constructor() {
     this._debug = false;
     this._lmsWindow = null;
     this._courseWindow = window.top;
-    this._apiName = '';
+    this._apiName = "";
     this._runtime = null;
-    this._lms = '';
+    this._lms = "";
+    this.started = false;
     if (this._findScorm()) {
       this._findLMS();
       this.start();
@@ -16,7 +20,7 @@ class LMSManager {
   }
 
   get active() {
-    return window.navigator.onLine && this._runtime && this._runtime.active;
+    return window.navigator.onLine && this.started && this._runtime && this._runtime.active;
   }
 
   get debug() {
@@ -37,7 +41,7 @@ class LMSManager {
   start() {
     if (this._lmsWindow) {
       switch (this._lms) {
-        case 'Intellum':
+        case "Intellum":
           this._runtime = new IntellumRuntime(this._apiName, this._lmsWindow);
           break;
         default:
@@ -47,8 +51,9 @@ class LMSManager {
         window.console.log(`started ${this._lms} runtime`);
         this._runtime.debug = true;
       }
-      this._runtime.status = 'incomplete';
+      this._runtime.status = "incomplete";
       this._runtime.score = 0;
+      this.started = true;
     }
   }
 
@@ -56,8 +61,8 @@ class LMSManager {
     if (this.active) {
       try {
         this.runtime.score = 100;
-        this.runtime.status = 'passed';
-        this.runtime.exit = 'normal';
+        this.runtime.status = "passed";
+        this.runtime.exit = "normal";
         this.runtime.recordSessionTime();
         this.runtime.finish();
         return true;
@@ -76,7 +81,7 @@ class LMSManager {
   _findScorm() {
     const maxAttempts = 100;
     let win = window;
-    let apiName = '';
+    let apiName = "";
     let attempts = 0;
 
     while (win && attempts < maxAttempts) {
@@ -101,11 +106,11 @@ class LMSManager {
   _findLMS() {
     if (this._apiName && this._lmsWindow) {
       if (this._lmsWindow.Intellum) {
-        this._lms = 'Intellum';
+        this._lms = "Intellum";
       } else if (this._lmsWindow.RunTimeApi) {
-        this._lms = 'Rustici';
+        this._lms = "Rustici";
       } else {
-        this._lms = 'unkown';
+        this._lms = "unkown";
       }
       if (this._debug) {
         window.console.log(`found ${this._lms} LMS`);
@@ -115,15 +120,15 @@ class LMSManager {
 
   static _windowAPI(win) {
     if (!win) {
-      return '';
+      return "";
     }
     if (win.API) {
-      return 'API';
+      return "API";
     }
     if (win.API_1484_11) {
-      return 'API_1484_11';
+      return "API_1484_11";
     }
-    return '';
+    return "";
   }
 }
 

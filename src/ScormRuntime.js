@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
 
-import { milliSecToSCORM12Time, milliSecToSCORM2004Time } from './scormTime';
+import { milliSecToSCORM12Time, milliSecToSCORM2004Time } from "./scormTime";
 
 class ScormRuntime {
   constructor(apiName, win) {
     this.debug = false;
-    this.apiName = '';
+    this.apiName = "";
     this.commitAll = false;
     this.win = null;
     this.v12 = undefined;
@@ -19,9 +19,9 @@ class ScormRuntime {
     if (win && win[apiName]) {
       this.win = win;
       this.apiName = apiName;
-      if (apiName === 'API') {
+      if (apiName === "API") {
         this.v12 = true;
-      } else if (apiName === 'API_1484_11') {
+      } else if (apiName === "API_1484_11") {
         this.v2004 = true;
         this.limit = 65536;
       }
@@ -34,15 +34,15 @@ class ScormRuntime {
   initialize() {
     let success = false;
     if (this.v12) {
-      success = this._v12call('LMSInitialize');
+      success = this._v12call("LMSInitialize");
     }
     if (this.v2004) {
-      success = this._v2004call('Initialize');
+      success = this._v2004call("Initialize");
     }
     if (success) {
-      this.exit = 'suspend';
+      this.exit = "suspend";
       this.live = true;
-      window.top.addEventListener('unload', this._unload.bind(this));
+      window.top.addEventListener("unload", this._unload.bind(this));
     }
     return success;
   }
@@ -50,16 +50,15 @@ class ScormRuntime {
   commit() {
     let success = false;
     if (this.v12) {
-      success = this._v12call('LMSCommit');
+      success = this._v12call("LMSCommit");
     }
     if (this.v2004) {
-      success = this._v2004call('Commit');
+      success = this._v2004call("Commit");
     }
     return success;
   }
 
   close() {
-    this.live = false;
     window.top.close();
   }
 
@@ -68,11 +67,11 @@ class ScormRuntime {
     if (success) {
       this.commit();
       if (this.v12) {
-        success = this._v12call('LMSFinish');
+        success = this._v12call("LMSFinish");
         this.live = false;
       }
       if (this.v2004) {
-        success = this._v2004call('Terminate');
+        success = this._v2004call("Terminate");
         this.live = false;
       }
     }
@@ -85,12 +84,12 @@ class ScormRuntime {
       const endTime = new Date();
       const milliSec = endTime.getTime() - this.startTime.getTime();
       if (this.v12) {
-        this._v12set('cmi.core.session_time', milliSecToSCORM12Time(milliSec));
+        this._v12set("cmi.core.session_time", milliSecToSCORM12Time(milliSec));
       }
       if (this.v2004) {
         const interval = milliSecToSCORM2004Time(milliSec);
         if (this.debug) window.console.log(`ms ${milliSec} timeinterval ${interval}`);
-        this._v2004set('cmi.session_time', interval);
+        this._v2004set("cmi.session_time", interval);
       }
       success = this.errorCode === 0;
     }
@@ -110,10 +109,10 @@ class ScormRuntime {
 
   get errorString() {
     if (this.errorCode === 666) {
-      return 'Implementation error';
+      return "Implementation error";
     }
     if (!this.api) {
-      return 'No SCORM API';
+      return "No SCORM API";
     }
     try {
       if (this.v12) {
@@ -125,27 +124,27 @@ class ScormRuntime {
     } catch (ex) {
       return ex.message;
     }
-    return 'No SCORM API';
+    return "No SCORM API";
   }
 
   get entry() {
     if (this.v12) {
-      return this._v12get('cmi.core.entry');
+      return this._v12get("cmi.core.entry");
     }
     if (this.v2004) {
-      return this._v2004get('cmi.entry');
+      return this._v2004get("cmi.entry");
     }
-    return '';
+    return "";
   }
 
   get mode() {
     if (this.v12) {
-      return this._v12get('cmi.core.lesson_mode');
+      return this._v12get("cmi.core.lesson_mode");
     }
     if (this.v2004) {
-      return this._v2004get('cmi.mode');
+      return this._v2004get("cmi.mode");
     }
-    return '';
+    return "";
   }
 
   get active() {
@@ -158,22 +157,22 @@ class ScormRuntime {
   set exit(value) {
     if (this.v12) {
       switch (value) {
-        case 'time-out':
-        case 'suspend':
-          this._v12set('cmi.core.exit', value);
+        case "time-out":
+        case "suspend":
+          this._v12set("cmi.core.exit", value);
           break;
         default:
-          this._v12set('cmi.core.exit', '');
+          this._v12set("cmi.core.exit", "");
       }
     }
     if (this.v2004) {
       switch (value) {
-        case 'time-out':
-        case 'suspend':
-          this._v2004set('cmi.exit', value);
+        case "time-out":
+        case "suspend":
+          this._v2004set("cmi.exit", value);
           break;
         default:
-          this._v2004set('cmi.exit', 'normal');
+          this._v2004set("cmi.exit", "normal");
       }
     }
   }
@@ -183,94 +182,94 @@ class ScormRuntime {
 
   get location() {
     if (this.v12) {
-      return this._v12get('cmi.core.lesson_location');
+      return this._v12get("cmi.core.lesson_location");
     }
     if (this.v2004) {
-      return this._v2004get('cmi.location');
+      return this._v2004get("cmi.location");
     }
-    return '';
+    return "";
   }
 
   set location(value) {
     if (this.v12) {
-      this._v12set('cmi.core.lesson_location', value);
+      this._v12set("cmi.core.lesson_location", value);
     }
     if (this.v2004) {
-      this._v2004set('cmi.location', value);
+      this._v2004set("cmi.location", value);
     }
   }
 
   get score() {
     if (this.v12) {
-      return Number(this._v12get('cmi.score.score.raw'));
+      return Number(this._v12get("cmi.score.score.raw"));
     }
     if (this.v2004) {
-      return Number(this._v2004get('cmi.score.raw'));
+      return Number(this._v2004get("cmi.score.raw"));
     }
     return 0;
   }
 
   set score(raw) {
     if (this.v12) {
-      this._v12set('cmi.core.score.min', String(this.min));
-      this._v12set('cmi.core.score.max', String(this.max));
-      this._v12set('cmi.core.score.raw', String(raw));
+      this._v12set("cmi.core.score.min", String(this.min));
+      this._v12set("cmi.core.score.max", String(this.max));
+      this._v12set("cmi.core.score.raw", String(raw));
     }
     if (this.v2004) {
-      this._v2004set('cmi.score.min', String(this.min));
-      this._v2004set('cmi.score.max', String(this.max));
-      this._v2004set('cmi.score.raw', String(raw));
+      this._v2004set("cmi.score.min", String(this.min));
+      this._v2004set("cmi.score.max", String(this.max));
+      this._v2004set("cmi.score.raw", String(raw));
     }
   }
 
   get status() {
     if (this.v12) {
-      return this._v12get('cmi.core.lesson_status');
+      return this._v12get("cmi.core.lesson_status");
     }
     if (this.v2004) {
-      let status = this._v2004get('cmi.completion_status');
-      if (status === 'completed') {
-        status = this._v2004get('cmi.success_status');
+      let status = this._v2004get("cmi.completion_status");
+      if (status === "completed") {
+        status = this._v2004get("cmi.success_status");
       }
       return status;
     }
-    return '';
+    return "";
   }
 
   set status(value) {
-    let status = '';
+    let status = "";
     switch (value) {
-      case 'completed':
-      case 'incomplete':
-      case 'passed':
-      case 'failed':
-      case 'unknown':
+      case "completed":
+      case "incomplete":
+      case "passed":
+      case "failed":
+      case "unknown":
         status = value;
         break;
       default:
         throw new Error(`Unexpected SCORM status ${value}`);
     }
     if (this.v12) {
-      this._v12set('cmi.core.lesson_status', value);
+      this._v12set("cmi.core.lesson_status", value);
     }
     if (this.v2004) {
       switch (status) {
-        case 'completed':
-        case 'passed':
-        case 'failed':
-          this._v2004set('cmi.completion_status', 'completed');
+        case "completed":
+        case "passed":
+        case "failed":
+          this._v2004set("cmi.completion_status", "completed");
           break;
         default:
-          this._v2004set('cmi.completion_status', 'incomplete');
+          this._v2004set("cmi.completion_status", "incomplete");
       }
       switch (status) {
-        case 'passed':
-        case 'failed':
-          this._v2004set('cmi.success_status', status);
+        case "passed":
+        case "failed":
+          this._v2004set("cmi.success_status", status);
           break;
-        case 'unknown':
-        case 'incomplete':
-          this._v2004set('cmi.success_status', 'unknown');
+        case "unknown":
+        case "incomplete":
+          this._v2004set("cmi.success_status", "unknown");
           break;
         default:
           throw new Error(`Unexpected SCORM status ${value}`);
@@ -279,18 +278,18 @@ class ScormRuntime {
   }
 
   get suspend_data() {
-    let data = '';
+    let data = "";
     if (this.v12) {
-      data = this._v12get('cmi.suspend_data');
+      data = this._v12get("cmi.suspend_data");
     }
     if (this.v2004) {
-      data = this._v2004get('cmi.suspend_data');
+      data = this._v2004get("cmi.suspend_data");
     }
     return data;
   }
 
   set suspend_data(data) {
-    if (typeof data !== 'string')
+    if (typeof data !== "string")
       throw new Error(`suspend_data must be a string, got ${typeof data}`);
     const str = data;
     if (this.debug) window.console.log(`set suspend_data ${str.length} bytes`);
@@ -299,17 +298,17 @@ class ScormRuntime {
       return;
     }
     if (this.v12) {
-      this._v12set('cmi.suspend_data', str);
+      this._v12set("cmi.suspend_data", str);
     }
     if (this.v2004) {
-      this._v2004set('cmi.suspend_data', str);
+      this._v2004set("cmi.suspend_data", str);
     }
   }
 
   // Private functions
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  _v12call(command, arg = '') {
+  _v12call(command, arg = "") {
     if (!this.api) {
       this.errorCode = 301;
       return false;
@@ -320,7 +319,7 @@ class ScormRuntime {
     }
     let success = false;
     try {
-      success = this.api[command] && this.api[command](arg) === 'true';
+      success = this.api[command] && this.api[command](arg) === "true";
       if (!success) {
         this.errorCode = Number(this.api.LMSGetLastError());
       } else {
@@ -337,7 +336,7 @@ class ScormRuntime {
     return success;
   }
 
-  _v2004call(command, arg = '') {
+  _v2004call(command, arg = "") {
     if (!this.api) {
       this.errorCode = 301;
       return false;
@@ -348,7 +347,7 @@ class ScormRuntime {
     }
     let success = false;
     try {
-      success = this.api[command] && this.api[command](arg) === 'true';
+      success = this.api[command] && this.api[command](arg) === "true";
       if (!success) {
         this.errorCode = Number(this.api.GetLastError());
       } else {
@@ -372,7 +371,7 @@ class ScormRuntime {
     }
     try {
       value = this.api.LMSGetValue(parameter);
-      if (value === '') {
+      if (value === "") {
         this.errorCode = Number(this.api.LMSGetLastError());
       } else {
         this.errorCode = 0;
@@ -395,7 +394,7 @@ class ScormRuntime {
     }
     try {
       value = this.api.GetValue(parameter);
-      if (value === '') {
+      if (value === "") {
         this.errorCode = Number(this.api.GetLastError());
       } else {
         this.errorCode = 0;
@@ -415,7 +414,7 @@ class ScormRuntime {
       this.errorCode = 301;
     } else {
       try {
-        const success = this.api.LMSSetValue(parameter, value) === 'true';
+        const success = this.api.LMSSetValue(parameter, value) === "true";
         if (!success) {
           this.errorCode = Number(this.api.LMSGetLastError());
         } else {
@@ -439,7 +438,7 @@ class ScormRuntime {
       this.errorCode = 301;
     } else {
       try {
-        const success = this.api.SetValue(parameter, value) === 'true';
+        const success = this.api.SetValue(parameter, value) === "true";
         if (!success) {
           this.errorCode = Number(this.api.GetLastError());
         } else {
@@ -458,45 +457,40 @@ class ScormRuntime {
     }
   }
 
-  /**
-   * Get the LMS suspend_data size. Don’t use this in production code.
-   * Use it in a JavaScript console in a SCROM session to find then set a
-   * non-default limit for a particular LMS. Requires setting up a subclass.
-   */
-  suspendSize() {
+  _suspendSize() {
     const _debug = this.debug;
     const limit = 1024;
-    const K = 'K'.repeat(1024);
+    const K = "K".repeat(1024);
     let n = 0;
     let step = 4;
     let error = 0;
     this.debug = false;
     if (this.v12) {
       n = step;
-      const buffer = this._v12get('cmi.suspend_data');
+      const buffer = this._v12get("cmi.suspend_data");
       while (n <= limit) {
-        this._v12set('cmi.suspend_data', K.repeat(n));
+        this._v12set("cmi.suspend_data", K.repeat(n));
         error = this.errorCode;
         if (error) {
           break;
         }
         n += step;
       }
-      this._v12set('cmi.suspend_data', buffer);
+      this._v12set("cmi.suspend_data", buffer);
     }
     if (this.v2004) {
       step = 64;
       n = step;
-      const buffer = this._v2004get('cmi.suspend_data');
+      const buffer = this._v2004get("cmi.suspend_data");
       while (n <= limit) {
-        this._v2004set('cmi.suspend_data', K.repeat(n));
+        this._v2004set("cmi.suspend_data", K.repeat(n));
         error = this.errorCode;
         if (error) {
           break;
         }
         n += step;
       }
-      this._v2004set('cmi.suspend_data', buffer);
+      this._v2004set("cmi.suspend_data", buffer);
     }
     const size = 1024 * (error ? n - step : n);
     this.debug = _debug;

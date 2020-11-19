@@ -1,4 +1,4 @@
-import ScormRuntime from './ScormRuntime';
+import ScormRuntime from "./ScormRuntime";
 
 class RusticiRuntime extends ScormRuntime {
   get active() {
