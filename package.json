@@ -2,8 +2,10 @@
   "name": "@plum/scorm-store",
   "version": "1.2.0",
   "description": "Manage an LMS supporting a SCORM v1.2 or v2004 API with fallback to localStorage",
-  "main": "index.js",
+  "main": "dist/index.common.js",
+  "module": "dist/index.esm.js",
   "scripts": {
+    "build": "rollup -c",
     "lint": "eslint src/*.js",
     "lint:fix": "eslint --fix src/*.js",
     "test": "echo \"Error: no test specified\" && exit 1"
