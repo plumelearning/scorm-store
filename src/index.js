@@ -143,7 +143,7 @@ export class ScormStore {
   }
 }
 
-const store = new Storage(process.env.VUE_APP_SCORM);
+const store = new ScormStore(!!process.env.SCORM_VERSION);
 Object.freeze(store);
 
 export default store;
