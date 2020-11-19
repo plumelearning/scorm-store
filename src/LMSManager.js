@@ -1,8 +1,5 @@
-import OnlineChecker from "./Online";
 import ScormRuntime from "./ScormRuntime";
-import RusticiRuntime from "./RusticiRuntime";
 import IntellumRuntime from "./IntellumRuntime";
-import { NetworkException, ScormException } from "./exceptions";
 
 class LMSManager {
   constructor() {

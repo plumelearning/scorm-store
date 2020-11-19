@@ -1,6 +1,9 @@
-export { default as LMSManager } from "./LMSManager";
-export { default as LocalStorage } from "./LocalStorage";
+import LMSManager from "./LMSManager";
+import LocalStorage from "./LocalStorage";
 import { LocalException, ScormException } from "./exceptions";
+
+// export these classes
+export { LocalStorage, LMSManager };
 
 // ScormStore Singleton
 export class ScormStore {

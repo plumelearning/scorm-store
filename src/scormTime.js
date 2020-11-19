@@ -1,5 +1,11 @@
-// SCORM requires time to be formatted in a specific way
-// Code adapted from https://scorm.com/scorm-explained/technical-scorm/golf-examples/
+/**
+ * Derived from source code created by Rustici Software, LLC, licensed under a
+ * Creative Commons Attribution 3.0 United States License
+ * (http://creativecommons.org/licenses/by/3.0/us/)
+ * Source: https://scorm.com/scorm-explained/technical-scorm/golf-examples/
+ */
+
+const DEBUG = false;
 
 function zeroPad(intNum, intNumDigits) {
   var strTemp;
@@ -139,7 +145,7 @@ function milliSecToSCORM2004Time(intTotalMilliseconds) {
     ScormTime += Days + "D";
   }
 
-  if (false)
+  if (DEBUG)
     window.console.log(
       `Hours ${Hours} Minutes ${Minutes} Seconds ${Seconds} Hundredths ${Hundredths}`
     );
