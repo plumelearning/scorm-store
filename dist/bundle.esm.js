@@ -1090,12 +1090,8 @@ class ScormStore {
   initLMS(autoDetect) {
     this.lms = new LMSManager();
     window.lms = this.lms;
-    if (process.env.VUE_APP_SCORM_DEBUG) this.lms.debug = true;
-    // console.log(`lms active ${this.lms.active}`);
-    // console.dir(lms);
     if (!this.lms.active) {
       if (autoDetect) this.lms = null;
-      // else throw new ScormException("LMS failed to initalize.", "launch");
     }
   }
 
