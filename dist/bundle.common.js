@@ -1,6 +1,6 @@
 /*!
-* @plum/scorm-store v1.2.0
-* (c) 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
+* scorm-store v1.2.0
+* Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
 'use strict';
@@ -1016,12 +1016,12 @@ class ScormStore {
     const config = window.courseConfig;
     const autoDetect = config && config.autoDetectSCORM;
     const disableLocal = config && config.noLocalStorage;
-    if (!Storage.instance) {
+    if (!ScormStore.instance) {
       if (scorm) this.initLMS(autoDetect);
       if (!this.lms && !disableLocal) this.initLocal();
-      Storage.instance = this;
+      ScormStore.instance = this;
     }
-    return Storage.instance;
+    return ScormStore.instance;
   }
 
   active() {
@@ -1150,10 +1150,6 @@ class ScormStore {
   }
 }
 
-const store = new ScormStore(!!process.env.SCORM_VERSION);
-Object.freeze(store);
-
 exports.LMSManager = LMSManager;
 exports.LocalStorage = LocalStorage;
-exports.ScormStore = ScormStore;
-exports.default = store;
+exports.default = ScormStore;

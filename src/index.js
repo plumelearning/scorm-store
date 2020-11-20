@@ -24,18 +24,18 @@ import { LocalException, ScormException } from "./exceptions";
 export { LocalStorage, LMSManager };
 
 // ScormStore Singleton
-export class ScormStore {
+export default class ScormStore {
   // only one instance!
   constructor(scorm = false) {
     const config = window.courseConfig;
     const autoDetect = config && config.autoDetectSCORM;
     const disableLocal = config && config.noLocalStorage;
-    if (!Storage.instance) {
+    if (!ScormStore.instance) {
       if (scorm) this.initLMS(autoDetect);
       if (!this.lms && !disableLocal) this.initLocal();
-      Storage.instance = this;
+      ScormStore.instance = this;
     }
-    return Storage.instance;
+    return ScormStore.instance;
   }
 
   active() {
@@ -163,8 +163,3 @@ export class ScormStore {
     return data;
   }
 }
-
-const store = new ScormStore(!!process.env.SCORM_VERSION);
-Object.freeze(store);
-
-export default store;

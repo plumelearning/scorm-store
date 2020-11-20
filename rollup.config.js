@@ -4,7 +4,7 @@ const name = "ScormStore";
 
 const banner = `/*!
 * ${pkg.name} v${pkg.version}
-* (c) 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
+* Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */`;
 
