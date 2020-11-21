@@ -1,5 +1,5 @@
 {
-  "name": "@plum/scorm-store",
+  "name": "@plumelearning/scorm-store",
   "version": "1.2.0",
   "description": "Manage an LMS supporting a SCORM v1.2 or v2004 API with fallback to localStorage",
   "main": "dist/bundle.common.js",
@@ -8,7 +8,7 @@
     "build": "rollup -c",
     "lint": "eslint src/*.js",
     "lint:fix": "eslint --fix src/*.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\""
   },
   "private": false,
   "author": "John F MacDonald <jmacdonald@plumelearning.com> (https://plumelearning.com)",
