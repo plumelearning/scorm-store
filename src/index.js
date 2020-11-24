@@ -20,19 +20,21 @@ import LMSManager from "./LMSManager";
 import LocalStorage from "./LocalStorage";
 import { LocalException, ScormException } from "./exceptions";
 
+const LZString = require("lz-string");
+
 // export these classes
 export { LocalStorage, LMSManager };
 
 // ScormStore Singleton
 export default class ScormStore {
   // only one instance!
-  constructor(scorm = false) {
+  constructor(scorm = false, storeName = "plum_course") {
     const config = window.courseConfig;
     const autoDetect = config && config.autoDetectSCORM;
     const disableLocal = config && config.noLocalStorage;
     if (!ScormStore.instance) {
       if (scorm) this.initLMS(autoDetect);
-      if (!this.lms && !disableLocal) this.initLocal();
+      if (!this.lms && !disableLocal) this.initLocal(storeName);
       ScormStore.instance = this;
     }
     return ScormStore.instance;
@@ -68,9 +70,9 @@ export default class ScormStore {
   /**
    * Local Storage
    ******************************************************************/
-  initLocal() {
+  initLocal(storeName) {
     try {
-      this.local = new LocalStorage("store");
+      this.local = new LocalStorage(storeName);
     } catch (e) {
       console.error(e);
       this.local = null;
@@ -121,7 +123,7 @@ export default class ScormStore {
     if (typeof data !== "object") throw new ScormException(`Invalid data object ${data}`, "save");
     if (this.lmsActive()) {
       try {
-        const suspendData = JSON.stringify(data);
+        const suspendData = LZString.compressToEncodedURIComponent(JSON.stringify(data));
         this.lms.runtime.suspend_data = suspendData;
       } catch (msg) {
         throw new ScormException(msg, "save");
@@ -152,7 +154,7 @@ export default class ScormStore {
     if (!this.lms.active) throw new ScormException("SCORM is not active", "recover");
     try {
       const suspendData = this.lms.runtime.suspend_data;
-      if (suspendData) data = JSON.parse(suspendData);
+      if (suspendData) data = JSON.parse(LZString.decompressFromEncodedURIComponent(suspendData));
     } catch (msg) {
       throw new ScormException(msg, "recover");
     }

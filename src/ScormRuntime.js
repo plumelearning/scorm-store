@@ -312,8 +312,15 @@ class ScormRuntime {
     const str = data;
     if (this.debug) window.console.log(`set suspend_data ${str.length} bytes`);
     if (str.length > this.limit) {
-      this.errorCode = 405;
-      return;
+      // let's see how much we have available
+      const newLimit = this._suspendSize();
+      if (newLimit > str.length) this.limit = newLimit;
+      else {
+        this.errorCode = 405;
+        throw new Error(
+          `SCORM error ${this.errorCode}: suspend_data size ${str.length} exceeds available ${this.limit} bytes`
+        );
+      }
     }
     if (this.v12) {
       this._v12set("cmi.suspend_data", str);
@@ -476,17 +483,20 @@ class ScormRuntime {
   }
 
   _suspendSize() {
-    const _debug = this.debug;
-    const limit = 1024;
-    const K = "K".repeat(1024);
+    const ceiling = 64; // max number of Ks we look for
+    const K = "K".repeat(1024); // one K
     let n = 0;
     let step = 4;
     let error = 0;
+    //turn  off debug noise
+    const _debug = this.debug;
     this.debug = false;
     if (this.v12) {
       n = step;
+      // save existing
       const buffer = this._v12get("cmi.suspend_data");
-      while (n <= limit) {
+      // try until it hurts
+      while (n <= ceiling) {
         this._v12set("cmi.suspend_data", K.repeat(n));
         error = this.errorCode;
         if (error) {
@@ -494,13 +504,16 @@ class ScormRuntime {
         }
         n += step;
       }
+      // restore previous
       this._v12set("cmi.suspend_data", buffer);
     }
-    if (this.v2004) {
+    if (this.v2004 && ceiling > 64) {
       step = 64;
       n = step;
+      // save existing
       const buffer = this._v2004get("cmi.suspend_data");
-      while (n <= limit) {
+      // try until it hurts
+      while (n <= ceiling) {
         this._v2004set("cmi.suspend_data", K.repeat(n));
         error = this.errorCode;
         if (error) {
@@ -508,6 +521,7 @@ class ScormRuntime {
         }
         n += step;
       }
+      // restore previous
       this._v2004set("cmi.suspend_data", buffer);
     }
     const size = 1024 * (error ? n - step : n);

@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.2.0
+* @plumelearning/scorm-store v1.2.1
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -505,8 +505,15 @@ class ScormRuntime {
     const str = data;
     if (this.debug) window.console.log(`set suspend_data ${str.length} bytes`);
     if (str.length > this.limit) {
-      this.errorCode = 405;
-      return;
+      // let's see how much we have available
+      const newLimit = this._suspendSize();
+      if (newLimit > str.length) this.limit = newLimit;
+      else {
+        this.errorCode = 405;
+        throw new Error(
+          `SCORM error ${this.errorCode}: suspend_data size ${str.length} exceeds available ${this.limit} bytes`
+        );
+      }
     }
     if (this.v12) {
       this._v12set("cmi.suspend_data", str);
@@ -669,17 +676,20 @@ class ScormRuntime {
   }
 
   _suspendSize() {
-    const _debug = this.debug;
-    const limit = 1024;
-    const K = "K".repeat(1024);
+    const ceiling = 64; // max number of Ks we look for
+    const K = "K".repeat(1024); // one K
     let n = 0;
     let step = 4;
     let error = 0;
+    //turn  off debug noise
+    const _debug = this.debug;
     this.debug = false;
     if (this.v12) {
       n = step;
+      // save existing
       const buffer = this._v12get("cmi.suspend_data");
-      while (n <= limit) {
+      // try until it hurts
+      while (n <= ceiling) {
         this._v12set("cmi.suspend_data", K.repeat(n));
         error = this.errorCode;
         if (error) {
@@ -687,13 +697,16 @@ class ScormRuntime {
         }
         n += step;
       }
+      // restore previous
       this._v12set("cmi.suspend_data", buffer);
     }
-    if (this.v2004) {
+    if (this.v2004 && ceiling > 64) {
       step = 64;
       n = step;
+      // save existing
       const buffer = this._v2004get("cmi.suspend_data");
-      while (n <= limit) {
+      // try until it hurts
+      while (n <= ceiling) {
         this._v2004set("cmi.suspend_data", K.repeat(n));
         error = this.errorCode;
         if (error) {
@@ -701,6 +714,7 @@ class ScormRuntime {
         }
         n += step;
       }
+      // restore previous
       this._v2004set("cmi.suspend_data", buffer);
     }
     const size = 1024 * (error ? n - step : n);
@@ -924,6 +938,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+const LZString = require("lz-string");
+
 /**
  * Class for storing object data in local/session Storage
  */
@@ -937,16 +953,27 @@ const LocalStorage = class {
 
   getData() {
     try {
-      return JSON.parse(window.localStorage.getItem(this.store));
+      const compressed = window.localStorage.getItem(this.store);
+      const expanded = LZString.decompressFromEncodedURIComponent(compressed);
+      if (expanded) {
+        return JSON.parse(expanded);
+      } else {
+        return {};
+      }
     } catch (e) {
-      console.error(e);
+      console.error(`Error recovering localStorage ${this.store}: ${e}`);
       return {};
     }
   }
 
   setData(object) {
     try {
-      window.localStorage.setItem(this.store, JSON.stringify(object));
+      const stringified = JSON.stringify(object);
+      const compressed = LZString.compressToEncodedURIComponent(stringified);
+      if (stringified.length && compressed.length) {
+        // console.log(`compression factor ${compressed.length / stringified.length}`);
+        window.localStorage.setItem(this.store, compressed);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -1009,16 +1036,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+const LZString$1 = require("lz-string");
+
 // ScormStore Singleton
 class ScormStore {
   // only one instance!
-  constructor(scorm = false) {
+  constructor(scorm = false, storeName = "plum_course") {
     const config = window.courseConfig;
     const autoDetect = config && config.autoDetectSCORM;
     const disableLocal = config && config.noLocalStorage;
     if (!ScormStore.instance) {
       if (scorm) this.initLMS(autoDetect);
-      if (!this.lms && !disableLocal) this.initLocal();
+      if (!this.lms && !disableLocal) this.initLocal(storeName);
       ScormStore.instance = this;
     }
     return ScormStore.instance;
@@ -1054,9 +1083,9 @@ class ScormStore {
   /**
    * Local Storage
    ******************************************************************/
-  initLocal() {
+  initLocal(storeName) {
     try {
-      this.local = new LocalStorage("store");
+      this.local = new LocalStorage(storeName);
     } catch (e) {
       console.error(e);
       this.local = null;
@@ -1107,7 +1136,7 @@ class ScormStore {
     if (typeof data !== "object") throw new ScormException(`Invalid data object ${data}`, "save");
     if (this.lmsActive()) {
       try {
-        const suspendData = JSON.stringify(data);
+        const suspendData = LZString$1.compressToEncodedURIComponent(JSON.stringify(data));
         this.lms.runtime.suspend_data = suspendData;
       } catch (msg) {
         throw new ScormException(msg, "save");
@@ -1138,7 +1167,7 @@ class ScormStore {
     if (!this.lms.active) throw new ScormException("SCORM is not active", "recover");
     try {
       const suspendData = this.lms.runtime.suspend_data;
-      if (suspendData) data = JSON.parse(suspendData);
+      if (suspendData) data = JSON.parse(LZString$1.decompressFromEncodedURIComponent(suspendData));
     } catch (msg) {
       throw new ScormException(msg, "recover");
     }
