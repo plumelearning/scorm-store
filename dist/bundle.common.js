@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.2.1
+* @plumelearning/scorm-store v1.2.2
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -1057,23 +1057,41 @@ class ScormStore {
     return this.localActive() || this.lmsActive();
   }
 
+  // deprecated
   save(data) {
+    this.saveData(data);
+  }
+
+  saveData(data) {
     if (this.local) this.saveToLocal(data);
     if (this.lms) this.saveToLMS(data);
   }
 
   saveBookmark(location) {
     if (this.lms) this.saveBookmarkToLMS(location);
+    if (this.local) this.saveBookmarkToLocal(location);
   }
 
+  // deprecated
   recover() {
-    if (this.local) return this.recoverFromLocal();
+    return this.recoverData();
+  }
+
+  recoverData() {
     if (this.lms) return this.recoverFromLMS();
+    if (this.local) return this.recoverFromLocal();
     return {};
+  }
+
+  recoverBookmark() {
+    if (this.lms) return this.recoverBookmarkFromLMS();
+    if (this.local) return this.recoverBookmarkFromLocal();
+    return "";
   }
 
   clear() {
     if (this.local) this.local.clear();
+    if (this.lmsActive()) this.lms.runtime.suspend_data = "";
   }
 
   commit() {
@@ -1086,6 +1104,7 @@ class ScormStore {
   initLocal(storeName) {
     try {
       this.local = new LocalStorage(storeName);
+      this.localBookmark = new LocalStorage(`${storeName}_bookmark`);
     } catch (e) {
       console.error(e);
       this.local = null;
@@ -1106,6 +1125,16 @@ class ScormStore {
     }
   }
 
+  saveBookmarkToLocal(location) {
+    if (typeof location !== "string")
+      throw new LocalException(`Invalid string ${location}`, "saveBookmark");
+    try {
+      this.localBookmark.setData({ location: location.trim() });
+    } catch (msg) {
+      throw new LocalException(msg, "save");
+    }
+  }
+
   recoverFromLocal() {
     let data = {};
     if (!this.local) throw new LocalException("localStorage has not been initalized", "recover");
@@ -1115,6 +1144,19 @@ class ScormStore {
       throw new LocalException(message, "recover");
     }
     return data;
+  }
+
+  recoverBookmarkFromLocal() {
+    let bookmark = "";
+    if (!this.localBookmark)
+      throw new LocalException("localStorage has not been initalized", "recover");
+    try {
+      const data = this.localBookmark.getData();
+      if (data.bookmark) bookmark = data.bookmark;
+    } catch (message) {
+      throw new LocalException(message, "recover");
+    }
+    return bookmark;
   }
 
   /**
@@ -1146,7 +1188,7 @@ class ScormStore {
 
   saveBookmarkToLMS(location) {
     if (typeof location !== "string")
-      throw new ScormException(`Invalid string ${location}`, "saveBookmark");
+      throw new Error(`Invalid string ${location}`, "saveBookmarkToLMS");
     if (this.lmsActive()) {
       try {
         this.lms.runtime.location = location.trim();
@@ -1173,8 +1215,21 @@ class ScormStore {
     }
     return data;
   }
+
+  recoverBookmarkFromLMS() {
+    if (!this.lms || !this.lms.runtime)
+      throw new ScormException("SCORM has not been initalized", "recover");
+    if (!this.lms.active) throw new ScormException("SCORM is not active", "recover");
+    try {
+      return this.lms.runtime.location;
+    } catch (msg) {
+      throw new ScormException(msg, "recover");
+    }
+  }
 }
 
 exports.LMSManager = LMSManager;
+exports.LocalException = LocalException;
 exports.LocalStorage = LocalStorage;
+exports.ScormException = ScormException;
 exports.default = ScormStore;
