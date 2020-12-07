@@ -60,9 +60,14 @@ class ScormRuntime {
     if (success) {
       this.exit = "suspend";
       this.live = true;
-      window.top.addEventListener("unload", this._unload.bind(this));
+      window.addEventListener("beforeunload", this._unload.bind(this));
+      window.addEventListener("unload", this._unload.bind(this));
     }
     return success;
+  }
+
+  removeBeforeUnload() {
+    window.removeEventListener("beforeunload", this._unload.bind(this));
   }
 
   commit() {
@@ -77,12 +82,13 @@ class ScormRuntime {
   }
 
   close() {
-    window.top.close();
+    window.close();
   }
 
   finish() {
     let success = this.active;
     if (success) {
+      this.recordSessionTime();
       this.commit();
       if (this.v12) {
         success = this._v12call("LMSFinish");

@@ -72,14 +72,15 @@ class LMSManager {
     }
   }
 
-  complete() {
+  complete(terminate = false) {
     if (this.active) {
       try {
         this.runtime.score = 100;
         this.runtime.status = "passed";
         this.runtime.exit = "normal";
         this.runtime.recordSessionTime();
-        this.runtime.finish();
+        this.runtime.removeBeforeUnload();
+        if (terminate) this.runtime.finish();
         return true;
       } catch (message) {
         console.error(message);
@@ -90,7 +91,7 @@ class LMSManager {
 
   close() {
     if (this.runtime) this.runtime.close();
-    else window.top.close();
+    else window.close();
   }
 
   _findScorm() {

@@ -32,7 +32,7 @@ class IntellumRuntime extends ScormRuntime {
     }
     const a = !!this.win && this.win.document.querySelector("#scorm_window_warning a");
     if (a) a.click();
-    else window.top.close();
+    else window.close();
   }
 
   _fixReturnToActivity() {
