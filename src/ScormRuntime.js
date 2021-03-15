@@ -82,7 +82,7 @@ class ScormRuntime {
   }
 
   close() {
-    window.close();
+    return false;
   }
 
   finish() {
@@ -99,6 +99,8 @@ class ScormRuntime {
         this.live = false;
       }
     }
+    window.removeEventListener("beforeunload", this._unload);
+    window.removeEventListener("unload", this._unload);
     return success;
   }
 
