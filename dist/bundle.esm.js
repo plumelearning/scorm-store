@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.3.0
+* @plumelearning/scorm-store v1.3.2
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -249,14 +249,17 @@ class ScormRuntime {
     if (success) {
       this.exit = "suspend";
       this.live = true;
-      window.addEventListener("beforeunload", this._unload.bind(this));
-      window.addEventListener("unload", this._unload.bind(this));
+      window.addEventListener("pagehide", this._unload.bind(this));
     }
     return success;
   }
 
+  addBeforeUnload() {
+    window.addEventListener("beforeunload", this._beforeunload, { capture: true });
+  }
+
   removeBeforeUnload() {
-    window.removeEventListener("beforeunload", this._unload.bind(this));
+    window.removeEventListener("beforeunload", this._beforeunload, { capture: true });
   }
 
   commit() {
@@ -271,7 +274,7 @@ class ScormRuntime {
   }
 
   close() {
-    window.close();
+    return false;
   }
 
   finish() {
@@ -288,6 +291,8 @@ class ScormRuntime {
         this.live = false;
       }
     }
+    this.removeBeforeUnload();
+    window.removeEventListener("pagehide", this._unload);
     return success;
   }
 
@@ -727,6 +732,12 @@ class ScormRuntime {
     return size;
   }
 
+  // pop alert confirming exit
+  _beforeunload(event) {
+    event.preventDefault();
+    return (event.returnValue = "Are you sure you want to exit?");
+  }
+
   _unload() {
     this.finish();
   }
@@ -755,7 +766,7 @@ class IntellumRuntime extends ScormRuntime {
     super(apiName, win);
     this.limit = 1048576;
     this._fixReturnToActivity();
-    this.win.addEventListener("unload", this._unload.bind(this));
+    this.win.addEventListener("pagehide", this._unload.bind(this));
   }
   close() {
     if (this.active) {
@@ -763,8 +774,11 @@ class IntellumRuntime extends ScormRuntime {
       this.finish();
     }
     const a = !!this.win && this.win.document.querySelector("#scorm_window_warning a");
-    if (a) a.click();
-    else window.close();
+    if (a) {
+      a.click();
+      return true;
+    }
+    return false;
   }
 
   _fixReturnToActivity() {
@@ -865,8 +879,7 @@ class LMSManager {
   }
 
   close() {
-    if (this.runtime) this.runtime.close();
-    else window.close();
+    if (!this.runtime || !this.runtime.close()) this._courseWindow.close();
   }
 
   _findScorm() {

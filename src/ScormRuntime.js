@@ -60,14 +60,17 @@ class ScormRuntime {
     if (success) {
       this.exit = "suspend";
       this.live = true;
-      window.addEventListener("beforeunload", this._unload.bind(this));
-      window.addEventListener("unload", this._unload.bind(this));
+      window.addEventListener("pagehide", this._unload.bind(this));
     }
     return success;
   }
 
+  addBeforeUnload() {
+    window.addEventListener("beforeunload", this._beforeunload, { capture: true });
+  }
+
   removeBeforeUnload() {
-    window.removeEventListener("beforeunload", this._unload.bind(this));
+    window.removeEventListener("beforeunload", this._beforeunload, { capture: true });
   }
 
   commit() {
@@ -99,8 +102,8 @@ class ScormRuntime {
         this.live = false;
       }
     }
-    window.removeEventListener("beforeunload", this._unload);
-    window.removeEventListener("unload", this._unload);
+    this.removeBeforeUnload();
+    window.removeEventListener("pagehide", this._unload);
     return success;
   }
 
@@ -538,6 +541,12 @@ class ScormRuntime {
       window.console.log(`suspend_data size: ${size}`);
     }
     return size;
+  }
+
+  // pop alert confirming exit
+  _beforeunload(event) {
+    event.preventDefault();
+    return (event.returnValue = "Are you sure you want to exit?");
   }
 
   _unload() {

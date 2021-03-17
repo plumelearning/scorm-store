@@ -23,7 +23,7 @@ class IntellumRuntime extends ScormRuntime {
     super(apiName, win);
     this.limit = 1048576;
     this._fixReturnToActivity();
-    this.win.addEventListener("unload", this._unload.bind(this));
+    this.win.addEventListener("pagehide", this._unload.bind(this));
   }
   close() {
     if (this.active) {
