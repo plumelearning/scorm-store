@@ -36,6 +36,9 @@ class ScormRuntime {
     this.startTime = new Date();
     if (win && win[apiName]) {
       this.win = win;
+      this.win.plumCloseCourse = function (w) {
+        w.close();
+      };
       this.apiName = apiName;
       if (apiName === "API") {
         this.v12 = true;
@@ -85,7 +88,12 @@ class ScormRuntime {
   }
 
   close() {
-    return false;
+    if (this.active) {
+      this.commit();
+      this.finish();
+    }
+    if (this.win && this.win !== window) this.win.plumCloseCourse(window);
+    else alert("You may now close this window.");
   }
 
   finish() {

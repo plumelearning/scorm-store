@@ -25,17 +25,14 @@ class IntellumRuntime extends ScormRuntime {
     this._fixReturnToActivity();
     this.win.addEventListener("pagehide", this._unload.bind(this));
   }
+
   close() {
     if (this.active) {
       this.commit();
       this.finish();
     }
-    const a = !!this.win && this.win.document.querySelector("#scorm_window_warning a");
-    if (a) {
-      a.click();
-      return true;
-    }
-    return false;
+    if (this.win && this.win.location && this.win.location.reload) this.win.location.reload();
+    else alert("You may now close this window.");
   }
 
   _fixReturnToActivity() {

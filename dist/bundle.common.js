@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.3.2
+* @plumelearning/scorm-store v1.4.0
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -229,6 +229,9 @@ class ScormRuntime {
     this.startTime = new Date();
     if (win && win[apiName]) {
       this.win = win;
+      this.win.plumCloseCourse = function (w) {
+        w.close();
+      };
       this.apiName = apiName;
       if (apiName === "API") {
         this.v12 = true;
@@ -278,7 +281,12 @@ class ScormRuntime {
   }
 
   close() {
-    return false;
+    if (this.active) {
+      this.commit();
+      this.finish();
+    }
+    if (this.win && this.win !== window) this.win.plumCloseCourse(window);
+    else alert("You may now close this window.");
   }
 
   finish() {
@@ -772,17 +780,14 @@ class IntellumRuntime extends ScormRuntime {
     this._fixReturnToActivity();
     this.win.addEventListener("pagehide", this._unload.bind(this));
   }
+
   close() {
     if (this.active) {
       this.commit();
       this.finish();
     }
-    const a = !!this.win && this.win.document.querySelector("#scorm_window_warning a");
-    if (a) {
-      a.click();
-      return true;
-    }
-    return false;
+    if (this.win && this.win.location && this.win.location.reload) this.win.location.reload();
+    else alert("You may now close this window.");
   }
 
   _fixReturnToActivity() {
@@ -883,7 +888,8 @@ class LMSManager {
   }
 
   close() {
-    if (!this.runtime || !this.runtime.close()) this._courseWindow.close();
+    if (this.runtime) this.runtime.close();
+    else alert("You may now close this window.");
   }
 
   _findScorm() {

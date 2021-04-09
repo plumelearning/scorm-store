@@ -90,7 +90,8 @@ class LMSManager {
   }
 
   close() {
-    if (!this.runtime || !this.runtime.close()) this._courseWindow.close();
+    if (this.runtime) this.runtime.close();
+    else alert("You may now close this window.");
   }
 
   _findScorm() {
