@@ -91,7 +91,8 @@ class LMSManager {
 
   close() {
     if (this.runtime) this.runtime.close();
-    else alert("You may now close this window.");
+    else if (window.opener) window.close();
+    else alert("Launch window not available. Please close this window.");
   }
 
   _findScorm() {

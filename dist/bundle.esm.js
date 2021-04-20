@@ -225,9 +225,6 @@ class ScormRuntime {
     this.startTime = new Date();
     if (win && win[apiName]) {
       this.win = win;
-      this.win.plumCloseCourse = function (w) {
-        w.close();
-      };
       this.apiName = apiName;
       if (apiName === "API") {
         this.v12 = true;
@@ -281,8 +278,10 @@ class ScormRuntime {
       this.commit();
       this.finish();
     }
-    if (this.win && this.win !== window) this.win.plumCloseCourse(window);
-    else alert("You may now close this window.");
+    setTimeout(() => {
+      if (window.opener) window.close();
+      else alert("Launch window not available. Please close this window.");
+    }, 0);
   }
 
   finish() {
@@ -777,15 +776,6 @@ class IntellumRuntime extends ScormRuntime {
     this.win.addEventListener("pagehide", this._unload.bind(this));
   }
 
-  close() {
-    if (this.active) {
-      this.commit();
-      this.finish();
-    }
-    if (this.win && this.win.location && this.win.location.reload) this.win.location.reload();
-    else alert("You may now close this window.");
-  }
-
   _fixReturnToActivity() {
     const a = this.win.document.querySelector("#scorm_window_warning a");
     if (a) {
@@ -885,7 +875,8 @@ class LMSManager {
 
   close() {
     if (this.runtime) this.runtime.close();
-    else alert("You may now close this window.");
+    else if (window.opener) window.close();
+    else alert("Launch window not available. Please close this window.");
   }
 
   _findScorm() {
