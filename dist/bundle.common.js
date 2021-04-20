@@ -284,7 +284,7 @@ class ScormRuntime {
     }
     setTimeout(() => {
       if (window.opener) window.close();
-      else alert("Launch window not available. Please close this window.");
+      else alert("You may now close this window.");
     }, 0);
   }
 
@@ -778,6 +778,18 @@ class IntellumRuntime extends ScormRuntime {
     this.limit = 1048576;
     this._fixReturnToActivity();
     this.win.addEventListener("pagehide", this._unload.bind(this));
+  }
+
+  close() {
+    if (this.active) {
+      this.commit();
+      this.finish();
+    }
+    this.win.location.reload();
+    setTimeout(() => {
+      if (window.opener) window.close();
+      else alert("You may now close this window.");
+    }, 0);
   }
 
   _fixReturnToActivity() {

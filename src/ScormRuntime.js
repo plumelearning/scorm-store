@@ -91,7 +91,7 @@ class ScormRuntime {
     }
     setTimeout(() => {
       if (window.opener) window.close();
-      else alert("Launch window not available. Please close this window.");
+      else alert("You may now close this window.");
     }, 0);
   }
 
