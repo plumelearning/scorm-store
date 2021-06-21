@@ -184,7 +184,7 @@ class ScormRuntime {
   }
 
   get active() {
-    return this.live && !!this.api;
+    return !!this.api && this.live && this.commit();
   }
 
   // Write only API

@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.4.0
+* @plumelearning/scorm-store v1.4.1
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -373,7 +373,7 @@ class ScormRuntime {
   }
 
   get active() {
-    return this.live && !!this.api;
+    return !!this.api && this.live && this.commit();
   }
 
   // Write only API
