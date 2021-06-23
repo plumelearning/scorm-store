@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.4.1
+* @plumelearning/scorm-store v1.4.2
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -1177,7 +1177,7 @@ class ScormStore {
       throw new LocalException("localStorage has not been initalized", "recover");
     try {
       const data = this.localBookmark.getData();
-      if (data.bookmark) bookmark = data.bookmark;
+      if (data.location) bookmark = data.location;
     } catch (message) {
       throw new LocalException(message, "recover");
     }

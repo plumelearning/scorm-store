@@ -140,7 +140,7 @@ export default class ScormStore {
       throw new LocalException("localStorage has not been initalized", "recover");
     try {
       const data = this.localBookmark.getData();
-      if (data.bookmark) bookmark = data.bookmark;
+      if (data.location) bookmark = data.location;
     } catch (message) {
       throw new LocalException(message, "recover");
     }
