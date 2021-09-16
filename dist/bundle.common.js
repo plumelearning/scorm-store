@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.4.2
+* @plumelearning/scorm-store v1.4.3
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -222,6 +222,7 @@ class ScormRuntime {
     this.v12 = undefined;
     this.v2004 = undefined;
     this.errorCode = 0;
+    this.interactions = [];
     this.min = 0;
     this.max = 100;
     this.limit = 4096;
@@ -254,6 +255,20 @@ class ScormRuntime {
       this.exit = "suspend";
       this.live = true;
       window.addEventListener("pagehide", this._unload.bind(this));
+    }
+    const interactionCount = Number(
+      this.v12
+        ? this._v12get("cmi.interactions._count")
+        : this._v2004call("cmi.interactions._count")
+    );
+    if (interactionCount) {
+      for (let n = 0; n < interactionCount; n += 1) {
+        const api = { id: `cmi.interactions.${n}.id`, type: `cmi.interactions.${n}.type` };
+        this.interactions.push({
+          id: this.v12 ? this._v12get(api.id) : this._v2004get(api.id),
+          type: this.v12 ? this._v12get(api.type) : this._v2004get(api.type),
+        });
+      }
     }
     return success;
   }
@@ -327,6 +342,53 @@ class ScormRuntime {
 
   destroy() {
     if (this.win && this.win[this.apiName]) this.win[this.apiName] = null;
+  }
+
+  getInteraction(id, type) {
+    // supported?
+    const count = Number(
+      this.v12 ? this._v12get("cmi.interactions._count") : this._v2004get("cmi.interactions._count")
+    );
+    if (this.errorCode)
+      throw new Error(`SCORM interactions are not supported. (ERROR code ${this.errorCode})`);
+    // valid args?
+    if (typeof id !== "string") throw new Error(`SCORM interaction id must be a string. Got ${id}`);
+    if (
+      ![
+        "true-false",
+        "choice",
+        "fill-in",
+        "matching",
+        "performance",
+        "sequencing",
+        "likert",
+        "numeric",
+      ].includes(type)
+    )
+      throw new Error(`Unsupported SCORM interaction type: ${type}`);
+    // already registered? then use it
+    let index = this.interactions.findIndex((i) => id === i.id && type === i.type);
+    // else register it
+    if (index === -1) {
+      index = count;
+      if (this.v12) {
+        this._v12set(`cmi.interactions.${index}.id`, id);
+        this._v12set(`cmi.interactions.${index}.type`, type);
+      } else {
+        this._v2004set(`cmi.interactions.${index}.id`, id);
+        this._v2004set(`cmi.interactions.${index}.type`, type);
+      }
+      this.commit();
+      this.interactions.push({ id, type });
+    }
+    return index;
+  }
+
+  recordInteraction(id, type, response) {
+    const index = this.getInteraction(id, type);
+    if (this.v12) this._v12set(`cmi.interactions.${index}.student_response`, response);
+    else this._v2004set(`cmi.interactions.${index}.student_response`, response);
+    this.commit();
   }
 
   // Read Only API
@@ -1071,12 +1133,13 @@ const LZString$1 = require("lz-string");
 class ScormStore {
   // only one instance!
   constructor(scorm = false, storeName = "plum_course") {
+    this.storeName = storeName;
     const config = window.courseConfig;
     const autoDetect = config && config.autoDetectSCORM;
     const disableLocal = config && config.noLocalStorage;
     if (!ScormStore.instance) {
       if (scorm) this.initLMS(autoDetect);
-      if (!this.lms && !disableLocal) this.initLocal(storeName);
+      if (!this.lms && !disableLocal) this.initLocal();
       ScormStore.instance = this;
     }
     return ScormStore.instance;
@@ -1099,6 +1162,12 @@ class ScormStore {
   saveBookmark(location) {
     if (this.lms) this.saveBookmarkToLMS(location);
     if (this.local) this.saveBookmarkToLocal(location);
+  }
+
+  // note: interaction responses are only available in the LMS
+  saveInteraction(id, type, response) {
+    if (this.lms) this.saveInteractionToLMS(id, type, response);
+    if (this.local) this.saveInteractionToLocal(id, type, response);
   }
 
   // deprecated
@@ -1130,10 +1199,10 @@ class ScormStore {
   /**
    * Local Storage
    ******************************************************************/
-  initLocal(storeName) {
+  initLocal() {
     try {
-      this.local = new LocalStorage(storeName);
-      this.localBookmark = new LocalStorage(`${storeName}_bookmark`);
+      this.local = new LocalStorage(this.storeName);
+      this.localInteraction = {};
     } catch (e) {
       console.error(e);
       this.local = null;
@@ -1158,10 +1227,20 @@ class ScormStore {
     if (typeof location !== "string")
       throw new LocalException(`Invalid string ${location}`, "saveBookmark");
     try {
+      if (!this.localBookmark) this.localBookmark = new LocalStorage(`${this.storeName}_bookmark`);
       this.localBookmark.setData({ location: location.trim() });
     } catch (msg) {
       throw new LocalException(msg, "save");
     }
+  }
+
+  saveInteractionToLocal(id, type, response) {
+    const key = `${id}-${type}`.toLowerCase().replace(/-/g, "_");
+    console.log(`saveInteractionToLocal( ${id}, ${type}, ${response}) key: ${key}`);
+    if (!this.localInteraction) this.localInteraction = {};
+    if (!this.localInteraction[key])
+      this.localInteraction[key] = new LocalStorage(`${this.storeName}_${key}`);
+    this.localInteraction[key].setData(response);
   }
 
   recoverFromLocal() {
@@ -1177,15 +1256,21 @@ class ScormStore {
 
   recoverBookmarkFromLocal() {
     let bookmark = "";
-    if (!this.localBookmark)
-      throw new LocalException("localStorage has not been initalized", "recover");
-    try {
-      const data = this.localBookmark.getData();
-      if (data.location) bookmark = data.location;
-    } catch (message) {
-      throw new LocalException(message, "recover");
+    if (this.localBookmark) {
+      try {
+        const data = this.localBookmark.getData();
+        if (data.location) bookmark = data.location;
+      } catch (message) {
+        throw new LocalException(message, "recover");
+      }
     }
     return bookmark;
+  }
+
+  recoverInteractionFromLocal(id, type) {
+    const key = `${id.trim()}-${type.trim}`.toLowerCase().replace(/-/g, "_");
+    if (this.localInteraction[key]) return this.localInteraction[key].getData();
+    return null;
   }
 
   /**
@@ -1225,6 +1310,16 @@ class ScormStore {
         throw new ScormException(msg, "saveBookmark");
       }
     }
+  }
+
+  saveInteractionToLMS(id, type, response) {
+    if (this.lmsActive()) {
+      try {
+        this.lms.runtime.recordInteraction(id, type, response);
+      } catch (msg) {
+        throw new ScormException(msg, "record");
+      }
+    } else throw new ScormException("SCORM is not active", "record");
   }
 
   commitToLMS() {

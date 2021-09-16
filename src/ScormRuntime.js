@@ -29,6 +29,7 @@ class ScormRuntime {
     this.v12 = undefined;
     this.v2004 = undefined;
     this.errorCode = 0;
+    this.interactions = [];
     this.min = 0;
     this.max = 100;
     this.limit = 4096;
@@ -61,6 +62,20 @@ class ScormRuntime {
       this.exit = "suspend";
       this.live = true;
       window.addEventListener("pagehide", this._unload.bind(this));
+    }
+    const interactionCount = Number(
+      this.v12
+        ? this._v12get("cmi.interactions._count")
+        : this._v2004call("cmi.interactions._count")
+    );
+    if (interactionCount) {
+      for (let n = 0; n < interactionCount; n += 1) {
+        const api = { id: `cmi.interactions.${n}.id`, type: `cmi.interactions.${n}.type` };
+        this.interactions.push({
+          id: this.v12 ? this._v12get(api.id) : this._v2004get(api.id),
+          type: this.v12 ? this._v12get(api.type) : this._v2004get(api.type),
+        });
+      }
     }
     return success;
   }
@@ -134,6 +149,53 @@ class ScormRuntime {
 
   destroy() {
     if (this.win && this.win[this.apiName]) this.win[this.apiName] = null;
+  }
+
+  getInteraction(id, type) {
+    // supported?
+    const count = Number(
+      this.v12 ? this._v12get("cmi.interactions._count") : this._v2004get("cmi.interactions._count")
+    );
+    if (this.errorCode)
+      throw new Error(`SCORM interactions are not supported. (ERROR code ${this.errorCode})`);
+    // valid args?
+    if (typeof id !== "string") throw new Error(`SCORM interaction id must be a string. Got ${id}`);
+    if (
+      ![
+        "true-false",
+        "choice",
+        "fill-in",
+        "matching",
+        "performance",
+        "sequencing",
+        "likert",
+        "numeric",
+      ].includes(type)
+    )
+      throw new Error(`Unsupported SCORM interaction type: ${type}`);
+    // already registered? then use it
+    let index = this.interactions.findIndex((i) => id === i.id && type === i.type);
+    // else register it
+    if (index === -1) {
+      index = count;
+      if (this.v12) {
+        this._v12set(`cmi.interactions.${index}.id`, id);
+        this._v12set(`cmi.interactions.${index}.type`, type);
+      } else {
+        this._v2004set(`cmi.interactions.${index}.id`, id);
+        this._v2004set(`cmi.interactions.${index}.type`, type);
+      }
+      this.commit();
+      this.interactions.push({ id, type });
+    }
+    return index;
+  }
+
+  recordInteraction(id, type, response) {
+    const index = this.getInteraction(id, type);
+    if (this.v12) this._v12set(`cmi.interactions.${index}.student_response`, response);
+    else this._v2004set(`cmi.interactions.${index}.student_response`, response);
+    this.commit();
   }
 
   // Read Only API
