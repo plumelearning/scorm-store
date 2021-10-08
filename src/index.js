@@ -133,7 +133,7 @@ export default class ScormStore {
 
   saveInteractionToLocal(id, type, response) {
     const key = `${id}-${type}`.toLowerCase().replace(/-/g, "_");
-    console.log(`saveInteractionToLocal( ${id}, ${type}, ${response}) key: ${key}`);
+    // console.log(`saveInteractionToLocal( ${id}, ${type}, ${response}) key: ${key}`);
     if (!this.localInteraction) this.localInteraction = {};
     if (!this.localInteraction[key])
       this.localInteraction[key] = new LocalStorage(`${this.storeName}_${key}`);
