@@ -2,7 +2,6 @@
 @license
 Copyright 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -27,10 +26,7 @@ class IntellumRuntime extends ScormRuntime {
   }
 
   close() {
-    if (this.active) {
-      this.commit();
-      this.finish();
-    }
+    this.finish();
     this.win.location.reload();
     setTimeout(() => {
       if (window.opener) window.close();

@@ -90,7 +90,7 @@ export default class ScormStore {
   }
 
   commit() {
-    if (this.lms) this.commitToLMS();
+    return !!this.lms && this.commitToLMS();
   }
 
   /**
@@ -220,7 +220,7 @@ export default class ScormStore {
   }
 
   commitToLMS() {
-    if (this.lmsActive()) this.lms.runtime.commit();
+    return this.lmsActive() && this.lms.commit();
   }
 
   recoverFromLMS() {

@@ -53,6 +53,10 @@ class LMSManager {
     return this._runtime;
   }
 
+  commit() {
+    return this.active && this._runtime.commit();
+  }
+
   start() {
     if (this._lmsWindow) {
       switch (this._lms) {
@@ -78,7 +82,6 @@ class LMSManager {
         this.runtime.score = 100;
         this.runtime.status = "passed";
         this.runtime.exit = "normal";
-        this.runtime.recordSessionTime();
         this.runtime.removeBeforeUnload();
         if (terminate) this.runtime.finish();
         return true;

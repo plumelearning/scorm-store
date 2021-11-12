@@ -217,7 +217,6 @@ class ScormRuntime {
   constructor(apiName, win) {
     this.debug = false;
     this.apiName = "";
-    this.commitAll = false;
     this.win = null;
     this.v12 = undefined;
     this.v2004 = undefined;
@@ -293,10 +292,7 @@ class ScormRuntime {
   }
 
   close() {
-    if (this.active) {
-      this.commit();
-      this.finish();
-    }
+    this.finish();
     setTimeout(() => {
       if (window.opener) window.close();
       else alert("You may now close this window.");
@@ -388,7 +384,6 @@ class ScormRuntime {
     const index = this.getInteraction(id, type);
     if (this.v12) this._v12set(`cmi.interactions.${index}.student_response`, response);
     else this._v2004set(`cmi.interactions.${index}.student_response`, response);
-    this.commit();
   }
 
   // Read Only API
@@ -439,7 +434,7 @@ class ScormRuntime {
   }
 
   get active() {
-    return !!this.api && this.live && this.commit();
+    return !!this.api && this.live;
   }
 
   // Write only API
@@ -717,9 +712,6 @@ class ScormRuntime {
           this.errorCode = Number(this.api.LMSGetLastError());
         } else {
           this.errorCode = 0;
-          if (this.commitAll) {
-            this.commit();
-          }
         }
       } catch (ex) {
         window.console.error(ex.message);
@@ -741,9 +733,6 @@ class ScormRuntime {
           this.errorCode = Number(this.api.GetLastError());
         } else {
           this.errorCode = 0;
-          if (this.commitAll) {
-            this.commit();
-          }
         }
       } catch (ex) {
         window.console.error(ex.message);
@@ -820,7 +809,6 @@ class ScormRuntime {
 @license
 Copyright 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -843,10 +831,7 @@ class IntellumRuntime extends ScormRuntime {
   }
 
   close() {
-    if (this.active) {
-      this.commit();
-      this.finish();
-    }
+    this.finish();
     this.win.location.reload();
     setTimeout(() => {
       if (window.opener) window.close();
@@ -915,6 +900,10 @@ class LMSManager {
     return this._runtime;
   }
 
+  commit() {
+    return this.active && this._runtime.commit();
+  }
+
   start() {
     if (this._lmsWindow) {
       switch (this._lms) {
@@ -940,7 +929,6 @@ class LMSManager {
         this.runtime.score = 100;
         this.runtime.status = "passed";
         this.runtime.exit = "normal";
-        this.runtime.recordSessionTime();
         this.runtime.removeBeforeUnload();
         if (terminate) this.runtime.finish();
         return true;
@@ -1193,7 +1181,7 @@ class ScormStore {
   }
 
   commit() {
-    if (this.lms) this.commitToLMS();
+    return !!this.lms && this.commitToLMS();
   }
 
   /**
@@ -1236,7 +1224,7 @@ class ScormStore {
 
   saveInteractionToLocal(id, type, response) {
     const key = `${id}-${type}`.toLowerCase().replace(/-/g, "_");
-    console.log(`saveInteractionToLocal( ${id}, ${type}, ${response}) key: ${key}`);
+    // console.log(`saveInteractionToLocal( ${id}, ${type}, ${response}) key: ${key}`);
     if (!this.localInteraction) this.localInteraction = {};
     if (!this.localInteraction[key])
       this.localInteraction[key] = new LocalStorage(`${this.storeName}_${key}`);
@@ -1323,7 +1311,7 @@ class ScormStore {
   }
 
   commitToLMS() {
-    if (this.lmsActive()) this.lms.runtime.commit();
+    return this.lmsActive() && this.lms.commit();
   }
 
   recoverFromLMS() {

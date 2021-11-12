@@ -24,7 +24,6 @@ class ScormRuntime {
   constructor(apiName, win) {
     this.debug = false;
     this.apiName = "";
-    this.commitAll = false;
     this.win = null;
     this.v12 = undefined;
     this.v2004 = undefined;
@@ -100,10 +99,7 @@ class ScormRuntime {
   }
 
   close() {
-    if (this.active) {
-      this.commit();
-      this.finish();
-    }
+    this.finish();
     setTimeout(() => {
       if (window.opener) window.close();
       else alert("You may now close this window.");
@@ -195,7 +191,6 @@ class ScormRuntime {
     const index = this.getInteraction(id, type);
     if (this.v12) this._v12set(`cmi.interactions.${index}.student_response`, response);
     else this._v2004set(`cmi.interactions.${index}.student_response`, response);
-    this.commit();
   }
 
   // Read Only API
@@ -246,7 +241,7 @@ class ScormRuntime {
   }
 
   get active() {
-    return !!this.api && this.live && this.commit();
+    return !!this.api && this.live;
   }
 
   // Write only API
@@ -524,9 +519,6 @@ class ScormRuntime {
           this.errorCode = Number(this.api.LMSGetLastError());
         } else {
           this.errorCode = 0;
-          if (this.commitAll) {
-            this.commit();
-          }
         }
       } catch (ex) {
         window.console.error(ex.message);
@@ -548,9 +540,6 @@ class ScormRuntime {
           this.errorCode = Number(this.api.GetLastError());
         } else {
           this.errorCode = 0;
-          if (this.commitAll) {
-            this.commit();
-          }
         }
       } catch (ex) {
         window.console.error(ex.message);
