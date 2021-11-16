@@ -927,6 +927,7 @@ class LMSManager {
         this.runtime.exit = "normal";
         this.runtime.removeBeforeUnload();
         if (terminate) this.runtime.finish();
+        else this.runtime.commit();
         return true;
       } catch (message) {
         console.error(message);
