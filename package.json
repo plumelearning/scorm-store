@@ -1,6 +1,6 @@
 {
   "name": "@plumelearning/scorm-store",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Manage an LMS supporting a SCORM v1.2 or v2004 API with fallback to localStorage",
   "main": "dist/bundle.common.js",
   "module": "dist/bundle.esm.js",
