@@ -95,6 +95,7 @@ class ScormRuntime {
     if (this.v2004) {
       success = this._v2004call("Commit");
     }
+    if (!success) this.live = false;
     return success;
   }
 
