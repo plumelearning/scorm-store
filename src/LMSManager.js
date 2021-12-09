@@ -49,6 +49,16 @@ class LMSManager {
     }
   }
 
+  get closeOnTermination() {
+    return this._runtime.closeOnUnload;
+  }
+
+  set closeOnTermination(tf) {
+    if (this._runtime) {
+      this._runtime.closeOnUnload = tf;
+    }
+  }
+
   get runtime() {
     return this._runtime;
   }
@@ -82,9 +92,10 @@ class LMSManager {
         this.runtime.score = 100;
         this.runtime.status = "passed";
         this.runtime.exit = "normal";
-        this.runtime.removeBeforeUnload();
-        if (terminate) this.runtime.finish();
-        else this.runtime.commit();
+        if (terminate) {
+          this.runtime.finish();
+          this.runtime.removeListeners();
+        } else this.runtime.commit();
         return true;
       } catch (message) {
         console.error(message);

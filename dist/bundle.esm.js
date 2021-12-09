@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.5.1
+* @plumelearning/scorm-store v1.5.2
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -222,6 +222,7 @@ class ScormRuntime {
     this.max = 100;
     this.limit = 4096;
     this.live = false;
+    this.closeOnUnload = false;
     this.startTime = new Date();
     if (win && win[apiName]) {
       this.win = win;
@@ -249,7 +250,7 @@ class ScormRuntime {
     if (success) {
       this.exit = "suspend";
       this.live = true;
-      window.addEventListener("pagehide", this._unload.bind(this));
+      this.addListeners();
     }
     const interactionCount = Number(
       this.v12
@@ -268,12 +269,14 @@ class ScormRuntime {
     return success;
   }
 
-  addBeforeUnload() {
-    window.addEventListener("beforeunload", this._beforeunload, { capture: true });
+  addListeners() {
+    window.addEventListener("beforeunload", this._unload.bind(this), { capture: true });
+    window.addEventListener("pagehide", this._unload.bind(this), { capture: true });
   }
 
-  removeBeforeUnload() {
-    window.removeEventListener("beforeunload", this._beforeunload, { capture: true });
+  removeListeners() {
+    window.removeEventListener("beforeunload", this._unload.bind(this), { capture: true });
+    window.removeEventListener("pagehide", this._unload.bind(this), { capture: true });
   }
 
   commit() {
@@ -310,8 +313,7 @@ class ScormRuntime {
         this.live = false;
       }
     }
-    this.removeBeforeUnload();
-    window.removeEventListener("pagehide", this._unload);
+    this.removeListeners();
     return success;
   }
 
@@ -791,14 +793,11 @@ class ScormRuntime {
     return size;
   }
 
-  // pop alert confirming exit
-  _beforeunload(event) {
-    event.preventDefault();
-    return (event.returnValue = "Are you sure you want to exit?");
-  }
-
-  _unload() {
-    this.finish();
+  _unload(event) {
+    if ("returnValue" in event) delete event.returnValue;
+    this.removeListeners();
+    if (this.closeOnUnload) this.close();
+    else this.finish();
   }
 }
 
@@ -893,6 +892,16 @@ class LMSManager {
     }
   }
 
+  get closeOnTermination() {
+    return this._runtime.closeOnUnload;
+  }
+
+  set closeOnTermination(tf) {
+    if (this._runtime) {
+      this._runtime.closeOnUnload = tf;
+    }
+  }
+
   get runtime() {
     return this._runtime;
   }
@@ -926,9 +935,10 @@ class LMSManager {
         this.runtime.score = 100;
         this.runtime.status = "passed";
         this.runtime.exit = "normal";
-        this.runtime.removeBeforeUnload();
-        if (terminate) this.runtime.finish();
-        else this.runtime.commit();
+        if (terminate) {
+          this.runtime.finish();
+          this.runtime.removeListeners();
+        } else this.runtime.commit();
         return true;
       } catch (message) {
         console.error(message);

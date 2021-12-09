@@ -33,6 +33,7 @@ class ScormRuntime {
     this.max = 100;
     this.limit = 4096;
     this.live = false;
+    this.closeOnUnload = false;
     this.startTime = new Date();
     if (win && win[apiName]) {
       this.win = win;
@@ -60,7 +61,7 @@ class ScormRuntime {
     if (success) {
       this.exit = "suspend";
       this.live = true;
-      window.addEventListener("pagehide", this._unload.bind(this));
+      this.addListeners();
     }
     const interactionCount = Number(
       this.v12
@@ -79,12 +80,14 @@ class ScormRuntime {
     return success;
   }
 
-  addBeforeUnload() {
-    window.addEventListener("beforeunload", this._beforeunload, { capture: true });
+  addListeners() {
+    window.addEventListener("beforeunload", this._unload.bind(this), { capture: true });
+    window.addEventListener("pagehide", this._unload.bind(this), { capture: true });
   }
 
-  removeBeforeUnload() {
-    window.removeEventListener("beforeunload", this._beforeunload, { capture: true });
+  removeListeners() {
+    window.removeEventListener("beforeunload", this._unload.bind(this), { capture: true });
+    window.removeEventListener("pagehide", this._unload.bind(this), { capture: true });
   }
 
   commit() {
@@ -121,8 +124,7 @@ class ScormRuntime {
         this.live = false;
       }
     }
-    this.removeBeforeUnload();
-    window.removeEventListener("pagehide", this._unload);
+    this.removeListeners();
     return success;
   }
 
@@ -602,14 +604,11 @@ class ScormRuntime {
     return size;
   }
 
-  // pop alert confirming exit
-  _beforeunload(event) {
-    event.preventDefault();
-    return (event.returnValue = "Are you sure you want to exit?");
-  }
-
-  _unload() {
-    this.finish();
+  _unload(event) {
+    if ("returnValue" in event) delete event.returnValue;
+    this.removeListeners();
+    if (this.closeOnUnload) this.close();
+    else this.finish();
   }
 }
 
