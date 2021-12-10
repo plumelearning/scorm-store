@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.5.2
+* @plumelearning/scorm-store v1.5.3
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -224,6 +224,7 @@ class ScormRuntime {
     this.live = false;
     this.closeOnUnload = false;
     this.startTime = new Date();
+    this._boundUnload = () => {};
     if (win && win[apiName]) {
       this.win = win;
       this.apiName = apiName;
@@ -234,6 +235,7 @@ class ScormRuntime {
         this.limit = 65536;
       }
       if (this.initialize()) {
+        this._boundUnload = this._unload.bind(this);
         this.commit();
       }
     }
@@ -250,7 +252,7 @@ class ScormRuntime {
     if (success) {
       this.exit = "suspend";
       this.live = true;
-      this.addListeners();
+      this._addListeners();
     }
     const interactionCount = Number(
       this.v12
@@ -267,16 +269,6 @@ class ScormRuntime {
       }
     }
     return success;
-  }
-
-  addListeners() {
-    window.addEventListener("beforeunload", this._unload.bind(this), { capture: true });
-    window.addEventListener("pagehide", this._unload.bind(this), { capture: true });
-  }
-
-  removeListeners() {
-    window.removeEventListener("beforeunload", this._unload.bind(this), { capture: true });
-    window.removeEventListener("pagehide", this._unload.bind(this), { capture: true });
   }
 
   commit() {
@@ -313,7 +305,7 @@ class ScormRuntime {
         this.live = false;
       }
     }
-    this.removeListeners();
+    this._removeListeners();
     return success;
   }
 
@@ -597,7 +589,31 @@ class ScormRuntime {
     }
   }
 
-  // Private functions
+  // Page life cycle event handling
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  _addListeners() {
+    window.addEventListener("freeze", this._boundUnload, { capture: true });
+    window.addEventListener("pagehide", this._boundUnload, { capture: true });
+  }
+
+  _removeListeners() {
+    window.removeEventListener("freeze", this._boundUnload, { capture: true });
+    window.removeEventListener("pagehide", this._boundUnload, { capture: true });
+  }
+
+  _unload(event) {
+    if ("returnValue" in event) delete event.returnValue;
+    this.finish();
+    if (this.closeOnUnload) {
+      setTimeout(() => {
+        if (window.opener) window.close();
+        else alert("You may now close this window.");
+      }, 0);
+    }
+  }
+
+  // SCORM interface
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   _v12call(command, arg = "") {
@@ -792,13 +808,6 @@ class ScormRuntime {
     }
     return size;
   }
-
-  _unload(event) {
-    if ("returnValue" in event) delete event.returnValue;
-    this.removeListeners();
-    if (this.closeOnUnload) this.close();
-    else this.finish();
-  }
 }
 
 /**
@@ -823,15 +832,21 @@ class IntellumRuntime extends ScormRuntime {
     super(apiName, win);
     this.limit = 1048576;
     this._fixReturnToActivity();
-    this.win.addEventListener("pagehide", this._unload.bind(this));
+    // this.win.addEventListener("pagehide", this._unload.bind(this));
   }
 
   close() {
     this.finish();
-    this.win.location.reload();
     setTimeout(() => {
-      if (window.opener) window.close();
-      else alert("You may now close this window.");
+      this.win.addEventListener(
+        "pagehide",
+        () => {
+          if (window.opener) window.close();
+          else alert("You may now close this window.");
+        },
+        { once: true }
+      );
+      this.win.location.reload();
     }, 0);
   }
 
@@ -1198,6 +1213,7 @@ class ScormStore {
   initLocal() {
     try {
       this.local = new LocalStorage(this.storeName);
+      this.localBookmark = new LocalStorage(`${this.storeName}_bookmark`);
       this.localInteraction = {};
     } catch (e) {
       console.error(e);
@@ -1223,7 +1239,6 @@ class ScormStore {
     if (typeof location !== "string")
       throw new LocalException(`Invalid string ${location}`, "saveBookmark");
     try {
-      if (!this.localBookmark) this.localBookmark = new LocalStorage(`${this.storeName}_bookmark`);
       this.localBookmark.setData({ location: location.trim() });
     } catch (msg) {
       throw new LocalException(msg, "save");
@@ -1233,7 +1248,6 @@ class ScormStore {
   saveInteractionToLocal(id, type, response) {
     const key = `${id}-${type}`.toLowerCase().replace(/-/g, "_");
     // console.log(`saveInteractionToLocal( ${id}, ${type}, ${response}) key: ${key}`);
-    if (!this.localInteraction) this.localInteraction = {};
     if (!this.localInteraction[key])
       this.localInteraction[key] = new LocalStorage(`${this.storeName}_${key}`);
     this.localInteraction[key].setData(response);
