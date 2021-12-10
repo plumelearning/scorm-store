@@ -99,6 +99,7 @@ export default class ScormStore {
   initLocal() {
     try {
       this.local = new LocalStorage(this.storeName);
+      this.localBookmark = new LocalStorage(`${this.storeName}_bookmark`);
       this.localInteraction = {};
     } catch (e) {
       console.error(e);
@@ -124,7 +125,6 @@ export default class ScormStore {
     if (typeof location !== "string")
       throw new LocalException(`Invalid string ${location}`, "saveBookmark");
     try {
-      if (!this.localBookmark) this.localBookmark = new LocalStorage(`${this.storeName}_bookmark`);
       this.localBookmark.setData({ location: location.trim() });
     } catch (msg) {
       throw new LocalException(msg, "save");
@@ -134,7 +134,6 @@ export default class ScormStore {
   saveInteractionToLocal(id, type, response) {
     const key = `${id}-${type}`.toLowerCase().replace(/-/g, "_");
     // console.log(`saveInteractionToLocal( ${id}, ${type}, ${response}) key: ${key}`);
-    if (!this.localInteraction) this.localInteraction = {};
     if (!this.localInteraction[key])
       this.localInteraction[key] = new LocalStorage(`${this.storeName}_${key}`);
     this.localInteraction[key].setData(response);
