@@ -35,6 +35,7 @@ class ScormRuntime {
     this.live = false;
     this.closeOnUnload = false;
     this.startTime = new Date();
+    this._boundUnload = () => {};
     if (win && win[apiName]) {
       this.win = win;
       this.apiName = apiName;
@@ -45,6 +46,7 @@ class ScormRuntime {
         this.limit = 65536;
       }
       if (this.initialize()) {
+        this._boundUnload = this._unload.bind(this);
         this.commit();
       }
     }
@@ -61,7 +63,7 @@ class ScormRuntime {
     if (success) {
       this.exit = "suspend";
       this.live = true;
-      this.addListeners();
+      this._addListeners();
     }
     const interactionCount = Number(
       this.v12
@@ -78,16 +80,6 @@ class ScormRuntime {
       }
     }
     return success;
-  }
-
-  addListeners() {
-    window.addEventListener("beforeunload", this._unload.bind(this), { capture: true });
-    window.addEventListener("pagehide", this._unload.bind(this), { capture: true });
-  }
-
-  removeListeners() {
-    window.removeEventListener("beforeunload", this._unload.bind(this), { capture: true });
-    window.removeEventListener("pagehide", this._unload.bind(this), { capture: true });
   }
 
   commit() {
@@ -124,7 +116,7 @@ class ScormRuntime {
         this.live = false;
       }
     }
-    this.removeListeners();
+    this._removeListeners();
     return success;
   }
 
@@ -408,7 +400,31 @@ class ScormRuntime {
     }
   }
 
-  // Private functions
+  // Page life cycle event handling
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  _addListeners() {
+    window.addEventListener("freeze", this._boundUnload, { capture: true });
+    window.addEventListener("pagehide", this._boundUnload, { capture: true });
+  }
+
+  _removeListeners() {
+    window.removeEventListener("freeze", this._boundUnload, { capture: true });
+    window.removeEventListener("pagehide", this._boundUnload, { capture: true });
+  }
+
+  _unload(event) {
+    if ("returnValue" in event) delete event.returnValue;
+    this.finish();
+    if (this.closeOnUnload) {
+      setTimeout(() => {
+        if (window.opener) window.close();
+        else alert("You may now close this window.");
+      }, 0);
+    }
+  }
+
+  // SCORM interface
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   _v12call(command, arg = "") {
@@ -602,13 +618,6 @@ class ScormRuntime {
       window.console.log(`suspend_data size: ${size}`);
     }
     return size;
-  }
-
-  _unload(event) {
-    if ("returnValue" in event) delete event.returnValue;
-    this.removeListeners();
-    if (this.closeOnUnload) this.close();
-    else this.finish();
   }
 }
 
