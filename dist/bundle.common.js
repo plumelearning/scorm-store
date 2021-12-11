@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.5.3
+* @plumelearning/scorm-store v1.5.4
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -835,31 +835,6 @@ class IntellumRuntime extends ScormRuntime {
   constructor(apiName, win) {
     super(apiName, win);
     this.limit = 1048576;
-    this._fixReturnToActivity();
-    // this.win.addEventListener("pagehide", this._unload.bind(this));
-  }
-
-  close() {
-    this.finish();
-    setTimeout(() => {
-      this.win.addEventListener(
-        "pagehide",
-        () => {
-          if (window.opener) window.close();
-          else alert("You may now close this window.");
-        },
-        { once: true }
-      );
-      this.win.location.reload();
-    }, 0);
-  }
-
-  _fixReturnToActivity() {
-    const a = this.win.document.querySelector("#scorm_window_warning a");
-    if (a) {
-      a.innerText = "Save & Close Activity";
-      a.addEventListener("click", this._unload.bind(this));
-    }
   }
 }
 
