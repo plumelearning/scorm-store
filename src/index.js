@@ -18,9 +18,8 @@ limitations under the License.
 
 import LMSManager from "./LMSManager";
 import LocalStorage from "./LocalStorage";
+import lzString from "./lzString";
 import { LocalException, ScormException } from "./exceptions";
-
-const LZString = require("lz-string");
 
 // export these classes
 export { LocalStorage, LMSManager };
@@ -188,7 +187,7 @@ export default class ScormStore {
     if (typeof data !== "object") throw new ScormException(`Invalid data object ${data}`, "save");
     if (this.lmsActive()) {
       try {
-        const suspendData = LZString.compressToEncodedURIComponent(JSON.stringify(data));
+        const suspendData = lzString.compressToEncodedURIComponent(JSON.stringify(data));
         this.lms.runtime.suspend_data = suspendData;
       } catch (msg) {
         throw new ScormException(msg, "save");
@@ -229,7 +228,7 @@ export default class ScormStore {
     if (!this.lms.active) throw new ScormException("SCORM is not active", "recover");
     try {
       const suspendData = this.lms.runtime.suspend_data;
-      if (suspendData) data = JSON.parse(LZString.decompressFromEncodedURIComponent(suspendData));
+      if (suspendData) data = JSON.parse(lzString.decompressFromEncodedURIComponent(suspendData));
     } catch (msg) {
       throw new ScormException(msg, "recover");
     }

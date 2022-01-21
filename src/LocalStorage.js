@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-const LZString = require("lz-string");
+import lzString from "./lzString";
 
 /**
  * Class for storing object data in local/session Storage
@@ -32,7 +32,7 @@ const LocalStorage = class {
   getData() {
     try {
       const compressed = window.localStorage.getItem(this.store);
-      const expanded = LZString.decompressFromEncodedURIComponent(compressed);
+      const expanded = lzString.decompressFromEncodedURIComponent(compressed);
       if (expanded) {
         return JSON.parse(expanded);
       } else {
@@ -47,7 +47,7 @@ const LocalStorage = class {
   setData(object) {
     try {
       const stringified = JSON.stringify(object);
-      const compressed = LZString.compressToEncodedURIComponent(stringified);
+      const compressed = lzString.compressToEncodedURIComponent(stringified);
       if (stringified.length && compressed.length) {
         // console.log(`compression factor ${compressed.length / stringified.length}`);
         window.localStorage.setItem(this.store, compressed);

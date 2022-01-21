@@ -22,7 +22,5 @@
     "prettier": "^2.1.2",
     "rollup": "^2.33.3"
   },
-  "dependencies": {
-    "lz-string": "^1.4.4"
-  }
+  "dependencies": {}
 }
