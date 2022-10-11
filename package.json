@@ -1,6 +1,6 @@
 {
   "name": "@plumelearning/scorm-store",
-  "version": "1.5.6",
+  "version": "1.6.0",
   "description": "Manage an LMS supporting a SCORM v1.2 or v2004 API with fallback to localStorage",
   "main": "dist/bundle.common.js",
   "module": "dist/bundle.esm.js",
@@ -20,7 +20,7 @@
   },
   "private": false,
   "author": "John F MacDonald <jmacdonald@plumelearning.com> (https://plumelearning.com)",
-  "license": "Apache 2.0",
+  "license": "Apache-2.0",
   "devDependencies": {
     "babel-eslint": "^10.1.0",
     "eslint": "^6.8.0",

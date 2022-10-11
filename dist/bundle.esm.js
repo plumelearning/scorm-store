@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.5.5
+* @plumelearning/scorm-store v1.5.6
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
@@ -919,10 +919,10 @@ class LMSManager {
     }
   }
 
-  complete(terminate = false) {
+  complete(terminate = false, score = 100) {
     if (this.active) {
       try {
-        this.runtime.score = 100;
+        this.runtime.score = score;
         this.runtime.status = "passed";
         this.runtime.exit = "normal";
         if (terminate) {
@@ -1326,6 +1326,7 @@ const LZString = (function () {
       }
 
       // Flush the last char
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         context_data_val = context_data_val << 1;
         if (context_data_position == bitsPerChar - 1) {
@@ -1346,6 +1347,7 @@ const LZString = (function () {
 
     _decompress: function (length, resetValue, getNextValue) {
       var dictionary = [],
+        // eslint-disable-next-line no-unused-vars
         next,
         enlargeIn = 4,
         dictSize = 4,
@@ -1418,6 +1420,7 @@ const LZString = (function () {
       dictionary[3] = c;
       w = c;
       result.push(c);
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         if (data.index > length) {
           return "";

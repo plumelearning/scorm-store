@@ -86,10 +86,10 @@ class LMSManager {
     }
   }
 
-  complete(terminate = false) {
+  complete(terminate = false, score = 100) {
     if (this.active) {
       try {
-        this.runtime.score = 100;
+        this.runtime.score = score;
         this.runtime.status = "passed";
         this.runtime.exit = "normal";
         if (terminate) {

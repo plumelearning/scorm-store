@@ -327,6 +327,7 @@ const LZString = (function () {
       }
 
       // Flush the last char
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         context_data_val = context_data_val << 1;
         if (context_data_position == bitsPerChar - 1) {
@@ -347,6 +348,7 @@ const LZString = (function () {
 
     _decompress: function (length, resetValue, getNextValue) {
       var dictionary = [],
+        // eslint-disable-next-line no-unused-vars
         next,
         enlargeIn = 4,
         dictSize = 4,
@@ -419,6 +421,7 @@ const LZString = (function () {
       dictionary[3] = c;
       w = c;
       result.push(c);
+      // eslint-disable-next-line no-constant-condition
       while (true) {
         if (data.index > length) {
           return "";
