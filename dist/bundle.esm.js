@@ -1,5 +1,5 @@
 /*!
-* @plumelearning/scorm-store v1.5.6
+* @plumelearning/scorm-store v1.6.0
 * Copyright 2018, 2019, 2020 Strategic Technology Solutions DBA Plum eLearning
 * @license Apache-2.0
 */
